@@ -1,0 +1,20 @@
+on:
+  push: {}
+jobs:
+  build-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: dist-newstyle
+          key: cabal-${{ hashFiles('composite-base.cabal') }}
+          restore-keys: |
+            cabal-${{ hashFiles('composite-base.cabal') }}
+            cabal-
+      - uses: haskell/actions/setup@v1
+        with:
+          ghc-version: '9.2.2'
+          enable-stack: false
+      - run: cabal v2-update
+      - run: cabal v2-build composite-base

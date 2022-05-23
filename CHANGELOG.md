@@ -2,6 +2,7 @@
 
 ## 0.8.0.0
 
+* Break composite-base from rest of projects
 * Support GHC 9.2.2, and with that make breaking aeson changes
 
 ## 0.7.6.0
