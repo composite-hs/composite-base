@@ -10,14 +10,6 @@ Downstream projects have moved to https://github.com/composite-hs/composite.
 
 Definitions shared by the other composite libraries or generally useful when using Vinyl records. Includes some Template Haskell splices to generate various optics for records, as well as a specialization of `MonadReader` which works on a context record, providing general environment for a computation.
 
-### Related work
-
-- [`compdoc`](https://hackage.haskell.org/package/compdoc) provides functionality for reading a Pandoc into a record.
-- [`composite-dhall`](https://hackage.haskell.org/package/composite-dhall) provides `ToDhall` and `FromDhall` instances for composite records.
-- [`composite-tuple`](https://hackage.haskell.org/package/composite-tuple) provides utility functions for treating composite records as tuples, ala `Relude.Extra.Tuple` from [relude](https://hackage.haskell.org/package/relude).
-- [`fcf-composite`](https://hackage.haskell.org/package/fcf-composite) provides integration with first-class-families for type-level computation of records.
-- [`polysemy-methodology-composite`](https://hackage.haskell.org/package/polysemy-methodology-composite) provides functions for using polysemy-methodology with composite.
-
 ## Maturity
 
 As of writing, we use these libraries in all our Haskell projects internally and have had no major issues. There are spots using either composite or vinyl where the compiler error messages could use improvement. There are certain use cases that can cause the simplifier to crash, though we have not observed any runtime errors as yet. They have not been proven out for performance at larger scale. We'd appreciate any fixes, improvements, or experience reports.
