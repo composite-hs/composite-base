@@ -2,7 +2,7 @@ name:                composite-base
 version:             0.8.0.0
 synopsis:            Shared utilities for composite-* packages.
 description:         Shared helpers for the various composite packages.
-homepage:            https://github.com/ConferOpenSource/composite#readme
+homepage:            https://github.com/composite-hs/composite-base#readme
 license:             BSD3
 author:              Confer Health, Inc.
 maintainer:          oss@vitalbio.com

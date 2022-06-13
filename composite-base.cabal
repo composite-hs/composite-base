@@ -4,18 +4,19 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: da6b479a20217b518ebbd91837b9c0a301f0bdef21bbc050013198b028cb8868
+-- hash: 014da0e74477cbedf2a34af7d695d50ae3bdcc12ab28b80f82df8e5c77057bfa
 
 name:           composite-base
 version:        0.8.0.0
 synopsis:       Shared utilities for composite-* packages.
 description:    Shared helpers for the various composite packages.
 category:       Records
-homepage:       https://github.com/ConferOpenSource/composite#readme
+homepage:       https://github.com/composite-hs/composite-base#readme
 author:         Confer Health, Inc.
 maintainer:     oss@vitalbio.com
 copyright:      2017 Confer Health, Inc., 2020-2021 Vital Biosciences
 license:        BSD3
+license-file:   LICENSE
 build-type:     Simple
 
 library

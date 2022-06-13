@@ -18,7 +18,7 @@ mkDerivation {
     unliftio-core vinyl
   ];
   prePatch = "hpack";
-  homepage = "https://github.com/ConferOpenSource/composite#readme";
+  homepage = "https://github.com/composite-hs/composite-base#readme";
   description = "Shared utilities for composite-* packages";
   license = lib.licenses.bsd3;
 }
