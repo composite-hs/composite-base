@@ -6,6 +6,7 @@ module Composite.CoRecord where
 import Prelude
 import Composite.Record (AllHave, HasInstances, (:->)(getVal, Val), reifyDicts, reifyVal, val, zipRecsWith)
 import Control.Lens (Prism', prism')
+import Data.Functor.Contravariant (Contravariant(contramap))
 import Data.Functor.Identity (Identity(Identity), runIdentity)
 import Data.Kind (Constraint)
 import Data.Maybe (fromMaybe)
@@ -190,6 +191,9 @@ asA = rget . fieldToRec
 -- |An extractor function @f a -> b@ which can be passed to 'foldCoRec' to eliminate one possible alternative of a 'CoRec'.
 newtype Case' f b a = Case' { unCase' :: f a -> b }
 
+instance Functor f => Contravariant (Case' f b) where
+  contramap f (Case' r) = Case' $ \x -> r (fmap f x) 
+
 -- |A record of @Case'@ eliminators for each @r@ in @rs@ representing the pieces of a total function from @'CoRec' f@ to @b@.
 type Cases' f rs b = Rec (Case' f b) rs
 
@@ -212,6 +216,10 @@ matchCoRec = flip foldCoRec
 {-# INLINE matchCoRec #-}
 
 newtype Case b a = Case { unCase :: a -> b }
+
+instance Contravariant (Case b) where
+  contramap f (Case r) = Case $ r . f
+
 type Cases rs b = Rec (Case b) rs
 
 -- |Fold a 'Field' using 'Cases' which eliminate each possible value held by the 'Field', yielding the @b@ produced by whichever case matches.
