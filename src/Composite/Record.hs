@@ -17,7 +17,7 @@ import Control.Lens (Iso, iso)
 import Control.Lens.TH (makeWrapped)
 import Data.Functor.Identity (Identity(Identity))
 import Data.Functor.Contravariant (Contravariant(contramap))
-import Data.Kind (Constraint)
+import Data.Kind (Constraint, Type)
 import Data.List.NonEmpty (NonEmpty((:|)))
 import Data.Proxy (Proxy(Proxy))
 import Data.String (IsString)
@@ -80,7 +80,7 @@ instance Traversable ((:->) s) where
   traverse k (Val a) = Val <$> k a
   {-# INLINE traverse #-}
 instance Monad ((:->) s) where
-  return = Val
+  return = pure
   {-# INLINE return #-}
   Val a >>= k = k a
   {-# INLINE (>>=) #-}
@@ -299,14 +299,14 @@ type family ValuesAllHave (cs :: [u -> Constraint]) (as :: [u]) :: Constraint wh
 -- |Given a list of constraints @cs@, apply some function for each @r@ in the target record type @rs@ with proof that those constraints hold for @r@,
 -- generating a record with the result of each application.
 reifyDicts
-  :: forall u. forall (cs :: [u -> Constraint]) (f :: u -> *) (rs :: [u]) (proxy :: [u -> Constraint] -> *).
+  :: forall u. forall (cs :: [u -> Constraint]) (f :: u -> Type) (rs :: [u]) (proxy :: [u -> Constraint] -> Type).
      (AllHave cs rs, RecApplicative rs)
   => proxy cs
   -> (forall proxy' (a :: u). HasInstances a cs => proxy' a -> f a)
   -> Rec f rs
 reifyDicts x f = go x (rpure (Const ())) f
   where
-    go :: forall (f :: u -> *) (cs :: [u -> Constraint]) (rs' :: [u]) (proxy :: [u -> Constraint] -> *). AllHave cs rs'
+    go :: forall (f :: u -> Type) (cs :: [u -> Constraint]) (rs' :: [u]) (proxy :: [u -> Constraint] -> Type). AllHave cs rs'
        => proxy cs
        -> Rec (Const ()) rs'
        -> (forall proxy' (a :: u). HasInstances a cs => proxy' a -> f a)
@@ -316,18 +316,18 @@ reifyDicts x f = go x (rpure (Const ())) f
 {-# INLINE reifyDicts #-}
 
 -- |Class which reifies the symbols of a record composed of ':->' fields as 'Text'.
-class ReifyNames (rs :: [*]) where
+class ReifyNames (rs :: [Type]) where
   -- |Given a @'Rec' f rs@ where each @r@ in @rs@ is of the form @s ':->' a@, make a record which adds the 'Text' for each @s@.
   reifyNames :: Rec f rs -> Rec ((,) Text :. f) rs
 
 instance ReifyNames '[] where
   reifyNames _ = RNil
 
-instance forall (s :: Symbol) a (rs :: [*]). (KnownSymbol s, ReifyNames rs) => ReifyNames (s :-> a ': rs) where
+instance forall (s :: Symbol) a (rs :: [Type]). (KnownSymbol s, ReifyNames rs) => ReifyNames (s :-> a ': rs) where
   reifyNames (fa :& rs) = Compose ((,) (pack $ symbolVal (Proxy @s)) fa) :& reifyNames rs
 
 -- |Class with 'Data.Vinyl.rmap' but which gives the natural transformation evidence that the value its working over is contained within the overall record @ss@.
-class RecWithContext (ss :: [*]) (ts :: [*]) where
+class RecWithContext (ss :: [Type]) (ts :: [Type]) where
   -- |Apply a natural transformation from @f@ to @g@ to each field of the given record, except that the natural transformation can be mildly unnatural by having
   -- evidence that @r@ is in @ss@.
   rmapWithContext :: proxy ss -> (forall r. r ∈ ss => f r -> g r) -> Rec f ts -> Rec g ts
@@ -335,7 +335,7 @@ class RecWithContext (ss :: [*]) (ts :: [*]) where
 instance RecWithContext ss '[] where
   rmapWithContext _ _ _ = RNil
 
-instance forall r (ss :: [*]) (ts :: [*]). (r ∈ ss, RecWithContext ss ts) => RecWithContext ss (r ': ts) where
+instance forall r (ss :: [Type]) (ts :: [Type]). (r ∈ ss, RecWithContext ss ts) => RecWithContext ss (r ': ts) where
   rmapWithContext proxy n (r :& rs) = n r :& rmapWithContext proxy n rs
 
 -- |Type function which removes the first element @r@ from a list @rs@, and doesn't expand if @r@ is not present in @rs@.
