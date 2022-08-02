@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1.0
+
+* Fixed GHC warnings for 9.0 and above
+
 ## 0.8.0.0
 
 * Break composite-base from rest of projects
