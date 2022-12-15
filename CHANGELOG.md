@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.2.1
+
+* No visible changes
+
 ## 0.8.2.0
 
 * No visible changes
