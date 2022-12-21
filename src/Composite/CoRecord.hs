@@ -5,17 +5,20 @@ module Composite.CoRecord where
 
 import Prelude
 import Composite.Record (AllHave, HasInstances, (:->)(getVal, Val), reifyDicts, reifyVal, val, zipRecsWith)
-import Control.Lens (Prism', prism')
+import Control.Lens (Prism', Wrapped, Unwrapped, prism', review, view, _Wrapped')
+import Control.Monad.Except (ExceptT, throwError, withExceptT)
 import Data.Functor.Contravariant (Contravariant(contramap))
 import Data.Functor.Identity (Identity(Identity), runIdentity)
 import Data.Kind (Constraint)
 import Data.Maybe (fromMaybe)
 import Data.Profunctor (dimap)
 import Data.Proxy (Proxy(Proxy))
+import Data.Text (Text, pack)
 import Data.Vinyl.Core (Dict(Dict), Rec((:&), RNil), RMap, RecApplicative, RecordToList, ReifyConstraint, recordToList, reifyConstraint, rmap, rpure)
 import Data.Vinyl.Functor (Compose(Compose, getCompose), Const(Const), (:.))
 import Data.Vinyl.Lens (RElem, type (∈), type (⊆), rget, rput, rreplace)
 import Data.Vinyl.TypeLevel (RecAll, RIndex)
+import GHC.TypeLits (KnownSymbol, symbolVal)
 
 -- FIXME? replace with int-index/union or at least lift ideas from there. This encoding is awkward to work with and not compositional.
 
@@ -245,3 +248,33 @@ widenField :: (FoldRec ss ss, RMap rs, RMap ss, RecApplicative rs, RecApplicativ
 widenField r =
   fromMaybe (error "widenField should be provably total, isn't") $
     firstField (rreplace (fieldToRec r) (rpure Nothing))
+
+type WiderCoRec rs ss = (FoldRec ss ss, RecApplicative rs, RecApplicative ss, rs ⊆ ss)
+
+type WrappedWiderCoRec f r rs s ss = (Wrapped r, Unwrapped r ~ CoRec f rs, Wrapped s, Unwrapped s ~ CoRec f ss, WiderCoRec rs ss)
+
+type WrappedWiderField r rs s ss = WrappedWiderCoRec Identity r rs s ss
+
+widenWrappedCoRec :: WrappedWiderCoRec f r rs s ss => r -> s
+widenWrappedCoRec = review _Wrapped' . widenCoRec . view _Wrapped'
+
+widenWrappedField :: WrappedWiderField r rs s ss => r -> s
+widenWrappedField = review _Wrapped' . widenCoRec . view _Wrapped'
+
+throwWidened :: (Monad m, WrappedWiderCoRec f e er e' er') => e -> ExceptT e' m a
+throwWidened = throwError . widenWrappedCoRec
+
+rethrowWidened :: (Functor m, WrappedWiderCoRec f e er e' er') => ExceptT e m a -> ExceptT e' m a
+rethrowWidened = withExceptT widenWrappedCoRec
+
+valCase :: forall s a b. (a -> b) -> Case b (s :-> a)
+valCase f = Case $ \(Val a) -> f a
+
+valCase' :: forall s f a b. Functor f => (f a -> b) -> Case' f b (s :-> a)
+valCase' f = Case' $ \fva -> f (fmap getVal fva)
+
+keywordCase :: KnownSymbol s => Case Text (s :-> ())
+keywordCase = keywordCase' id
+
+keywordCase' :: KnownSymbol s => (Text -> a) -> Case a (s :-> ())
+keywordCase' f = Case $ \(Val () :: s :-> ()) -> f (pack (symbolVal (Proxy @s)))
