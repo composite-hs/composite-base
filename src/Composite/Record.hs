@@ -10,12 +10,13 @@ module Composite.Record
   , ReifyNames(reifyNames)
   , RecWithContext(rmapWithContext)
   , RDelete, RDeletable, rdelete
+  , _SingleVal
   ) where
 
 import Control.DeepSeq(NFData(rnf))
 import Control.Lens (Iso, iso)
 import Control.Lens.TH (makeWrapped)
-import Data.Functor.Identity (Identity(Identity))
+import Data.Functor.Identity (Identity(Identity), runIdentity)
 import Data.Functor.Contravariant (Contravariant(contramap))
 import Data.Kind (Constraint, Type)
 import Data.List.NonEmpty (NonEmpty((:|)))
@@ -349,3 +350,10 @@ type RDeletable r rs = (r ∈ rs, RDelete r rs ⊆ rs)
 -- |Remove an element @r@ from a @'Rec' f rs@. Note this is just a type constrained 'rcast'.
 rdelete :: RDeletable r rs => proxy r -> Rec f rs -> Rec f (RDelete r rs)
 rdelete _ = rcast
+
+-- |'Iso' which observes that a record with a single field @s@ with value @a@ is isomorphic to the value alone.
+_SingleVal :: forall s a b. Iso (Record '[s :-> a]) (Record '[s :-> b]) a b
+_SingleVal =
+  let toA :: Record '[s :-> a] -> a = getVal . runIdentity . Vinyl.rget @(s :-> a)
+      fromA x = Identity (Val x) :& RNil
+   in iso toA fromA
