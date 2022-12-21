@@ -10,6 +10,7 @@ module Composite.Record
   , ReifyNames(reifyNames)
   , RecWithContext(rmapWithContext)
   , RDelete, RDeletable, rdelete
+  , _SingleVal
   ) where
 
 import Control.DeepSeq(NFData(rnf))
