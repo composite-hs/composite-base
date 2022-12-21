@@ -351,6 +351,7 @@ type RDeletable r rs = (r ∈ rs, RDelete r rs ⊆ rs)
 rdelete :: RDeletable r rs => proxy r -> Rec f rs -> Rec f (RDelete r rs)
 rdelete _ = rcast
 
+-- |'Iso' which observes that a record with a single field @s@ with value @a@ is isomorphic to the value alone.
 _SingleVal :: forall s a b. Iso (Record '[s :-> a]) (Record '[s :-> b]) a b
 _SingleVal =
   let toA :: Record '[s :-> a] -> a = getVal . runIdentity . Vinyl.rget @(s :-> a)

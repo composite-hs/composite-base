@@ -249,32 +249,63 @@ widenField r =
   fromMaybe (error "widenField should be provably total, isn't") $
     firstField (rreplace (fieldToRec r) (rpure Nothing))
 
+-- |Constraint showing that @rs ⊆ ss@ and giving enough power to widen a @'CoRec' f rs@ to @'CoRec' f ss@.
 type WiderCoRec rs ss = (FoldRec ss ss, RecApplicative rs, RecApplicative ss, rs ⊆ ss)
 
+-- |Constraint on a pair of types @r@ and @s@ which are 'Wrapped' around @'CoRec' f rs@ and @'CoRec' f ss@ respectively and observes that those types can be unwrapped and the former can be widened to the latter.
 type WrappedWiderCoRec f r rs s ss = (Wrapped r, Unwrapped r ~ CoRec f rs, Wrapped s, Unwrapped s ~ CoRec f ss, WiderCoRec rs ss)
 
+-- |'WrappedWiderCoRec' specialized to 'CoRec' 'Identity', i.e. 'Field'.
 type WrappedWiderField r rs s ss = WrappedWiderCoRec Identity r rs s ss
 
+-- |Widen a @'CoRec' f rs@ wrapped in @r@ to a @'CoRec' f ss@ wrapped in @s@.
 widenWrappedCoRec :: WrappedWiderCoRec f r rs s ss => r -> s
 widenWrappedCoRec = review _Wrapped' . widenCoRec . view _Wrapped'
 
+-- |Widen a @'Field' rs@ wrapped in @r@ to a @'Field' ss@ wrapped in @s@.
 widenWrappedField :: WrappedWiderField r rs s ss => r -> s
 widenWrappedField = review _Wrapped' . widenCoRec . view _Wrapped'
 
+-- |Widen a wrapped 'CoRec' using 'widenWrappedCoRec' and then throw it as an 'ExceptT' error, as a convenience when using 'CoRec' / 'Field' for building up error types by set union.
 throwWidened :: (Monad m, WrappedWiderCoRec f e er e' er') => e -> ExceptT e' m a
 throwWidened = throwError . widenWrappedCoRec
 
+-- |Catch a wrapped 'CoRec' thrown by an 'ExceptT' and widen it using 'widenWrappedCoRec' then rethrow it, as a convenience when using 'CoRec' / 'Field' for building up error types by set union.
 rethrowWidened :: (Functor m, WrappedWiderCoRec f e er e' er') => ExceptT e m a -> ExceptT e' m a
 rethrowWidened = withExceptT widenWrappedCoRec
 
+-- |Specialized type of 'Case' for 'Val', with the type parameters in a convenient order for type application, e.g.:
+--
+-- @
+--   valCase @"foo" (\ a -> ...)
+--     :& valCase @"bar" (\ b -> ...)
+--     :& RNil
+-- @
 valCase :: forall s a b. (a -> b) -> Case b (s :-> a)
 valCase f = Case $ \(Val a) -> f a
 
+-- |Specialized type of 'Case'' for 'Val', with the type parameters in a convenient order for type application, e.g.:
+--
+-- @
+--   valCase' @"foo" (\ fa -> ...)
+--     :& valCase' @"bar" (\ fb -> ...)
+--     :& RNil
+-- @
 valCase' :: forall s f a b. Functor f => (f a -> b) -> Case' f b (s :-> a)
 valCase' f = Case' $ \fva -> f (fmap getVal fva)
 
+-- |Make a 'Case' which yields the symbol text for a field @s :-> ()@. E.g.:
+--
+-- @
+--   keywordCase @"foo" (Identity (Val ())) == "foo"
+-- @
 keywordCase :: KnownSymbol s => Case Text (s :-> ())
 keywordCase = keywordCase' id
 
+-- |Make a 'Case'' which yields the symbol text for a field @s :-> ()@ as projected through the given function. E.g.:
+--
+-- @
+--   keywordCase @"foo" (<> "bar") (Identity (Val ())) == "foobar"
+-- @
 keywordCase' :: KnownSymbol s => (Text -> a) -> Case a (s :-> ())
 keywordCase' f = Case $ \(Val () :: s :-> ()) -> f (pack (symbolVal (Proxy @s)))
