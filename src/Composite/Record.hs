@@ -10,6 +10,7 @@ module Composite.Record
   , ReifyNames(reifyNames)
   , RecWithContext(rmapWithContext)
   , RDelete, RDeletable, rdelete
+  , rwiden
   , _SingleVal
   ) where
 
@@ -23,9 +24,9 @@ import Data.List.NonEmpty (NonEmpty((:|)))
 import Data.Proxy (Proxy(Proxy))
 import Data.String (IsString)
 import Data.Text (Text, pack)
-import Data.Vinyl (Rec((:&), RNil), RecApplicative, rcast, recordToList, rpure)
+import Data.Vinyl (Rec((:&), RNil), RecApplicative, RMap, rcast, rdowncast, recordToList, rmap, rpure)
 import qualified Data.Vinyl as Vinyl
-import Data.Vinyl.Functor (Compose(Compose), Const(Const), (:.))
+import Data.Vinyl.Functor (Compose(Compose, getCompose), Const(Const), (:.))
 import Data.Vinyl.Lens (type (∈), type (⊆))
 import qualified Data.Vinyl.TypeLevel as Vinyl
 import Data.Vinyl.XRec(IsoHKD(HKD, toHKD, unHKD))
@@ -350,6 +351,10 @@ type RDeletable r rs = (r ∈ rs, RDelete r rs ⊆ rs)
 -- |Remove an element @r@ from a @'Rec' f rs@. Note this is just a type constrained 'rcast'.
 rdelete :: RDeletable r rs => proxy r -> Rec f rs -> Rec f (RDelete r rs)
 rdelete _ = rcast
+
+-- |Widen a record from @'Record' rs@ to @'Rec' 'Maybe' ss@. Note this is just a type constrainted 'rdowncast'.
+rwiden :: (RecApplicative ss, RMap rs, RMap ss, rs ⊆ ss) => Record rs -> Rec Maybe ss
+rwiden = rmap (fmap runIdentity . getCompose) . rdowncast
 
 -- |'Iso' which observes that a record with a single field @s@ with value @a@ is isomorphic to the value alone.
 _SingleVal :: forall s a b. Iso (Record '[s :-> a]) (Record '[s :-> b]) a b
