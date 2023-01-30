@@ -82,8 +82,6 @@ instance Traversable ((:->) s) where
   traverse k (Val a) = Val <$> k a
   {-# INLINE traverse #-}
 instance Monad ((:->) s) where
-  return = pure
-  {-# INLINE return #-}
   Val a >>= k = k a
   {-# INLINE (>>=) #-}
 

@@ -9,7 +9,7 @@ import Control.Lens (Prism', Wrapped, Unwrapped, prism', review, view, _Wrapped'
 import Control.Monad.Except (ExceptT, throwError, withExceptT)
 import Data.Functor.Contravariant (Contravariant(contramap))
 import Data.Functor.Identity (Identity(Identity), runIdentity)
-import Data.Kind (Constraint)
+import Data.Kind (Constraint, Type)
 import Data.Maybe (fromMaybe)
 import Data.Profunctor (dimap)
 import Data.Proxy (Proxy(Proxy))
@@ -23,7 +23,7 @@ import GHC.TypeLits (KnownSymbol, symbolVal)
 -- FIXME? replace with int-index/union or at least lift ideas from there. This encoding is awkward to work with and not compositional.
 
 -- |@CoRef f rs@ represents a single value of type @f r@ for some @r@ in @rs@.
-data CoRec :: (u -> *) -> [u] -> * where
+data CoRec :: (u -> Type) -> [u] -> Type where
   -- |Witness that @r@ is an element of @rs@ using '∈' ('RElem' with 'RIndex') from Vinyl.
   CoVal :: r ∈ rs => !(f r) -> CoRec f rs
 
@@ -163,10 +163,10 @@ newtype Op b a = Op { runOp :: a -> b }
 
 -- |Given a list of constraints @cs@ required to apply some function, apply the function to whatever value @r@ (not @f r@) which the 'CoRec' contains.
 onCoRec
-  :: forall (cs :: [* -> Constraint]) (f :: * -> *) (rs :: [*]) (b :: *) (proxy :: [* -> Constraint] -> *).
+  :: forall (cs :: [Type -> Constraint]) (f :: Type -> Type) (rs :: [Type]) (b :: Type) (proxy :: [Type -> Constraint] -> Type).
      (AllHave cs rs, Functor f, RecApplicative rs)
   => proxy cs
-  -> (forall (a :: *). HasInstances a cs => a -> b)
+  -> (forall (a :: Type). HasInstances a cs => a -> b)
   -> CoRec f rs
   -> f b
 onCoRec p f (CoVal x) = go <$> x
@@ -176,10 +176,10 @@ onCoRec p f (CoVal x) = go <$> x
 
 -- |Given a list of constraints @cs@ required to apply some function, apply the function to whatever value @r@ which the 'Field' contains.
 onField
-  :: forall (cs :: [* -> Constraint]) (rs :: [*]) (b :: *) (proxy :: [* -> Constraint] -> *).
+  :: forall (cs :: [Type -> Constraint]) (rs :: [Type]) (b :: Type) (proxy :: [Type -> Constraint] -> Type).
      (AllHave cs rs, RecApplicative rs)
   => proxy cs
-  -> (forall (a :: *). HasInstances a cs => a -> b)
+  -> (forall (a :: Type). HasInstances a cs => a -> b)
   -> Field rs
   -> b
 onField p f x = runIdentity (onCoRec p f x)
