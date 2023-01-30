@@ -46,6 +46,7 @@ import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
 import qualified Control.Monad.Writer.Lazy as Lazy
 import qualified Control.Monad.Writer.Strict as Strict
 import Control.Monad.Writer.Class (MonadWriter(writer, tell, listen, pass))
+import Data.Kind (Type)
 
 import Control.Monad.IO.Unlift
   ( MonadUnliftIO
@@ -59,7 +60,7 @@ import Control.Monad.IO.Unlift
 
 -- |Class of monad (stacks) which have context reading functionality baked in. Similar to 'Control.Monad.Reader.MonadReader' but can coexist with a
 -- another monad that provides 'Control.Monad.Reader.MonadReader' and requires the context to be a record.
-class Monad m => MonadContext (c :: [*]) m | m -> c where
+class Monad m => MonadContext (c :: [Type]) m | m -> c where
   -- |Fetch the context record from the environment.
   askContext :: m (Record c)
 
@@ -123,7 +124,7 @@ askField :: MonadContext c m => Getter (Record c) a -> m a
 askField l = asksContext $ view l
 
 -- |Monad transformer which adds an implicit environment which is a record. Isomorphic to @ReaderT (Record c) m@.
-newtype ContextT (c :: [*]) (m :: (* -> *)) a = ContextT { runContextT :: Record c -> m a }
+newtype ContextT (c :: [Type]) (m :: (Type -> Type)) a = ContextT { runContextT :: Record c -> m a }
 
 -- |Run some action in a given context, equivalent to 'runContextT' but with the arguments flipped.
 runInContext :: Record c -> ContextT c m a -> m a
