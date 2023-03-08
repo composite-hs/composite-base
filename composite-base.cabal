@@ -59,7 +59,7 @@ library
       base >=4.12 && <5
     , deepseq ==1.4.*
     , exceptions >=0.8.3 && <0.11
-    , lens >=4.15.4 && <5.2
+    , lens >=4.15.4 && <5.3
     , monad-control >=1.0.2.2 && <1.1
     , mtl >=2.2.1 && <2.3
     , profunctors >=5.2.1 && <5.7
@@ -112,7 +112,7 @@ test-suite composite-base-test
     , deepseq ==1.4.*
     , exceptions >=0.8.3 && <0.11
     , hspec
-    , lens >=4.15.4 && <5.2
+    , lens >=4.15.4 && <5.3
     , monad-control >=1.0.2.2 && <1.1
     , mtl >=2.2.1 && <2.3
     , profunctors >=5.2.1 && <5.7
