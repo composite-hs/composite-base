@@ -22,6 +22,9 @@ import Language.Haskell.TH
 #if MIN_VERSION_template_haskell(2,17,0)
   , Specificity(SpecifiedSpec)
 #endif
+#if MIN_VERSION_template_haskell(2,21,0)
+  , BndrVis
+#endif
   )
 import Language.Haskell.TH.Lens (_TySynD)
 
@@ -146,11 +149,19 @@ withOpticsAndProxies :: Q [Dec] -> Q [Dec]
 withOpticsAndProxies = withBoilerplate True True
 
 #if MIN_VERSION_template_haskell(2,17,0)
+#if MIN_VERSION_template_haskell(2,21,0)
+tyUnitToSpec :: Specificity -> TyVarBndr BndrVis -> TyVarBndr Specificity
+#else
 tyUnitToSpec :: Specificity -> TyVarBndr () -> TyVarBndr Specificity
-tyUnitToSpec x (PlainTV n ()) = PlainTV n x
-tyUnitToSpec x (KindedTV n () k) = KindedTV n x k
+#endif
+tyUnitToSpec x (PlainTV n _) = PlainTV n x
+tyUnitToSpec x (KindedTV n _ k) = KindedTV n x k
 
+#if MIN_VERSION_template_haskell(2,21,0)
+fieldDecUnitToSpec :: Specificity -> FieldDec BndrVis -> FieldDec Specificity
+#else
 fieldDecUnitToSpec :: Specificity -> FieldDec () -> FieldDec Specificity
+#endif
 fieldDecUnitToSpec x (FieldDec n b t v) = FieldDec n (map (tyUnitToSpec x) b) t v
 
 data FieldDec a = FieldDec
@@ -186,7 +197,9 @@ withBoilerplate generateLenses generatePrisms qDecs = do
 #endif
   pure $ decs <> concat proxyDecs <> concat lensDecs <> concat prismDecs
 
-#if MIN_VERSION_template_haskell(2,17,0)
+#if MIN_VERSION_template_haskell(2,21,0)
+fieldDecMay :: (Name, [TyVarBndr BndrVis], Type) -> Maybe (FieldDec BndrVis)
+#elif MIN_VERSION_template_haskell(2,17,0)
 fieldDecMay :: (Name, [TyVarBndr ()], Type) -> Maybe (FieldDec ())
 #else
 fieldDecMay :: (Name, [TyVarBndr], Type) -> Maybe FieldDec
@@ -210,7 +223,9 @@ lensNameFor  = mkName . over _head toLower . nameBase
 prismNameFor = mkName . ("_" ++) . nameBase
 proxyNameFor = mkName . (++ "_") . over _head toLower . nameBase
 
-#if MIN_VERSION_template_haskell(2,17,0)
+#if MIN_VERSION_template_haskell(2,21,0)
+proxyDecFor :: FieldDec BndrVis -> Q [Dec]
+#elif MIN_VERSION_template_haskell(2,17,0)
 proxyDecFor :: FieldDec () -> Q [Dec]
 #else
 proxyDecFor :: FieldDec -> Q [Dec]
