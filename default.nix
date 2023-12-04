@@ -14,7 +14,7 @@ let
   };
   shell = project.shellFor {
     tools = {
-      cabal = "3.6.2.0";
+      cabal = "3.10.1.0";
     };
     exactDeps = true;
   };
