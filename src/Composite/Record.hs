@@ -88,12 +88,6 @@ instance Monad ((:->) s) where
 instance NFData a => NFData (s :-> a) where
   rnf (Val x) = rnf x
 
--- instance NFData (Record '[]) where
---   rnf RNil = ()
-
--- instance (NFData x, NFData (Record xs)) => NFData (Record (x : xs)) where
---   rnf (x :& xs) = rnf x `seq` rnf xs
-
 instance forall (s :: Symbol) a. (KnownSymbol s, Show a) => Show (s :-> a) where
   showsPrec p (Val a) = ((symbolVal (Proxy :: Proxy s) ++ " :-> ") ++) . showsPrec p a
 
