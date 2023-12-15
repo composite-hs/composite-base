@@ -1,5 +1,10 @@
 # Changelog
 
+## next version
+
+* NFData instance for Record removed, since it overlapped with Vinyl's
+* NFData instance for Field added
+
 ## 0.8.2.2
 
 * No visible changes
