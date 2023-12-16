@@ -5,6 +5,7 @@ module Composite.CoRecord where
 
 import Prelude
 import Composite.Record (AllHave, HasInstances, (:->)(getVal, Val), reifyDicts, reifyVal, val, zipRecsWith)
+import Control.DeepSeq (NFData, rnf)
 import Control.Lens (Prism', Wrapped, Unwrapped, prism', review, view, _Wrapped')
 import Control.Monad.Except (ExceptT, throwError, withExceptT)
 import Data.Functor.Contravariant (Contravariant(contramap))
@@ -40,6 +41,13 @@ instance forall rs. (RMap rs, RecAll Maybe rs Eq, RecApplicative rs, RecordToLis
       f :: forall a. (Dict Eq :. Maybe) a -> Maybe a -> Const Bool a
       f (Compose (Dict a)) b = Const $ a == b
       toRec = reifyConstraint . fieldToRec
+
+instance forall rs. (AllHave '[NFData] rs, RecApplicative rs) => NFData (CoRec Identity rs) where
+  rnf (CoVal (Identity x)) = rnf' x
+    where
+      rnfer :: Rec (Op ()) rs
+      rnfer = reifyDicts (Proxy @'[NFData]) (\ _ -> Op rnf)
+      rnf' = runOp (rget rnfer)
 
 -- |The common case of a 'CoRec' with @f ~ 'Identity'@, i.e. a regular value.
 type Field = CoRec Identity
