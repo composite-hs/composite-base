@@ -1,3 +1,8 @@
+{-# LANGUAGE CPP #-}
+#if __GLASGOW_HASKELL__ >= 902
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
+#endif
+
 module RecordSpec where
 
 import Composite.Record
