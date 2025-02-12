@@ -1,7 +1,7 @@
 cabal-version: 1.12
 
 name:           composite-base
-version:        0.8.2.2
+version:        0.8.3.0
 synopsis:       Shared utilities for composite-* packages.
 description:    Shared helpers for the various composite packages.
 category:       Records

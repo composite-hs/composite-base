@@ -2,8 +2,11 @@
 
 ## next version
 
+## 0.8.3.0
+
 * NFData instance for Record removed, since it overlapped with Vinyl's
 * NFData instance for Field added
+* Version bounds and forward compatibility
 
 ## 0.8.2.2
 
