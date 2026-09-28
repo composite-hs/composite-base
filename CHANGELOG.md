@@ -2,6 +2,8 @@
 
 ## next version
 
+* `Composite.Record.Builder`, which builds records with `QualifiedDo`, one field per line: `R.do { R.field @"name" "alice"; R.field @"age" 42 }`
+
 ## 0.8.3.0
 
 * NFData instance for Record removed, since it overlapped with Vinyl's

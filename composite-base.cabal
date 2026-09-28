@@ -18,6 +18,7 @@ library
       Composite
       Composite.CoRecord
       Composite.Record
+      Composite.Record.Builder
       Composite.TH
       Control.Monad.Composite.Context
   other-modules:
@@ -69,6 +70,7 @@ test-suite composite-base-test
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
+      BuilderSpec
       RecordSpec
       THSpec
       Paths_composite_base
