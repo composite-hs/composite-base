@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE UndecidableInstances #-} -- argh, for ReifyNames
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Composite.Record
@@ -10,6 +11,7 @@ module Composite.Record
   , ReifyNames(reifyNames)
   , RecWithContext(rmapWithContext)
   , RDelete, RDeletable, rdelete
+  , RFieldType
   , rwiden
   , _SingleVal
   ) where
@@ -31,7 +33,11 @@ import Data.Vinyl.Lens (type (∈), type (⊆))
 import qualified Data.Vinyl.TypeLevel as Vinyl
 import Data.Vinyl.XRec(IsoHKD(HKD, toHKD, unHKD))
 import Foreign.Storable (Storable)
-import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
+#if __GLASGOW_HASKELL__ >= 902
+import GHC.Records (HasField(getField))
+#endif
+import GHC.TypeLits (ErrorMessage(ShowType, (:<>:)), KnownSymbol, Symbol, TypeError, symbolVal)
+import qualified GHC.TypeLits as TypeLits
 
 -- FIXME this file is a big bin of random stuff, and should be at least organized if not split up.
 
@@ -336,6 +342,37 @@ instance forall r (ss :: [Type]) (ts :: [Type]). (r ∈ ss, RecWithContext ss ts
 type family RDelete (r :: u) (rs :: [u]) where
   RDelete r (r ': rs) = rs
   RDelete r (s ': rs) = s ': RDelete r rs
+
+-- |Type function which finds the value type @a@ of the first field @s ':->' a@ in @rs@, and is a type error if @rs@ has no field @s@.
+type family RFieldType (s :: Symbol) (rs :: [Type]) :: Type where
+  RFieldType s '[] = TypeError ('TypeLits.Text "Record has no field " ':<>: 'ShowType s)
+  RFieldType s (s :-> a ': rs) = a
+  RFieldType s (r ': rs) = RFieldType s rs
+
+#if __GLASGOW_HASKELL__ >= 902
+-- |Read a field of a 'Record' by its label, which is what @OverloadedRecordDot@ uses.
+--
+-- For example, given:
+--
+-- @
+--   rec :: 'Record' '["foo" :-> Int, "bar" :-> String]
+--   rec = 123 :*: "hello!" :*: RNil
+-- @
+--
+-- Then with @OverloadedRecordDot@:
+--
+-- @
+--   rec.foo == 123
+--   rec.bar == "hello!"
+-- @
+--
+-- Code polymorphic in @rs@ needs a constraint that fixes the type of the field, @('RFieldType' "foo" rs ~ Int, 'RElem' ("foo" :-> Int) rs)@ or
+-- @'HasField' "foo" ('Record' rs) Int@ (which warns under @-Wsimplifiable-class-constraints@ without @MonoLocalBinds@).
+-- @("foo" :-> Int) ∈ rs@ alone is not enough, since it does not rule out an earlier field also labelled @"foo"@.
+instance (a ~ RFieldType s rs, RElem (s :-> a) rs) => HasField s (Rec Identity rs) a where
+  getField = getVal . runIdentity . Vinyl.rget @(s :-> a)
+  {-# INLINE getField #-}
+#endif
 
 -- |Constraint which reflects that an element @r@ can be removed from @rs@ using 'rdelete'.
 type RDeletable r rs = (r ∈ rs, RDelete r rs ⊆ rs)

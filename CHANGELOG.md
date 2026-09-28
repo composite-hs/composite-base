@@ -2,6 +2,9 @@
 
 ## next version
 
+* `HasField` instance for `Record` (GHC 9.2 and above), so fields can be read with `OverloadedRecordDot`, e.g. `rec.foo`
+* `RFieldType` type function which finds the value type of a field in a record
+
 ## 0.8.3.0
 
 * NFData instance for Record removed, since it overlapped with Vinyl's

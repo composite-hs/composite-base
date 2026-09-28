@@ -69,6 +69,7 @@ test-suite composite-base-test
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
+      HasFieldSpec
       RecordSpec
       THSpec
       Paths_composite_base
